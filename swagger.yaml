@@ -1,0 +1,318 @@
+openapi: 3.0.0
+info:
+  title: Eventful API
+  description: This API provides functionalities for managing events, including user registration, event creation, and event application.
+  version: 1.0.0
+servers:
+  - url: http://api.eventful.com/v1
+    description: Production server
+  - url: http://staging-api.eventful.com
+    description: Staging server for testing
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /register:
+    post:
+      summary: Register a new user.
+      description: Registers a new user in the Eventful application.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                isCreator:
+                  type: boolean
+              required:
+                - name
+                - email
+                - password
+      responses:
+        '201':
+          description: User successfully registered.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  isCreator:
+                    type: boolean
+        '400':
+          description: Bad request. Validation failed.
+
+  /login:
+    post:
+      summary: Log in a user.
+      description: Authenticates a user and returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: User successfully authenticated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Unauthorized. Invalid email or password.
+
+  /events:
+    post:
+      summary: Create a new event.
+      description: Allows a creator to create a new event.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                date:
+                  type: string
+                  format: date-time
+                reminderTime:
+                  type: integer
+                creatorId:
+                  type: string
+              required:
+                - title
+                - date
+                - creatorId
+      responses:
+        '201':
+          description: Event successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  date:
+                    type: string
+                    format: date-time
+                  creatorId:
+                    type: string
+                  attendees:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Bad request. Validation failed.
+
+    get:
+      summary: Retrieve all events.
+      description: Allows users to retrieve a list of all events.
+      responses:
+        '200':
+          description: Successfully retrieved all events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Unique identifier of the event.
+                    title:
+                      type: string
+                      description: Title of the event.
+                    description:
+                      type: string
+                      description: Description of the event.
+                    date:
+                      type: string
+                      format: date-time
+                      description: Date and time of the event.
+                    creatorId:
+                      type: string
+                      description: ID of the creator of the event.
+                    attendees:
+                      type: array
+                      items:
+                        type: string
+                      description: List of attendees' IDs.
+        '500':
+          description: Internal server error. An unexpected error occurred.
+
+  /events/{eventId}:
+    get:
+      summary: Get event by ID.
+      description: Retrieve a specific event by its ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved the event.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier of the event.
+                  title:
+                    type: string
+                    description: Title of the event.
+                  description:
+                    type: string
+                    description: Description of the event.
+                  date:
+                    type: string
+                    format: date-time
+                    description: Date and time of the event.
+                  creatorId:
+                    type: string
+                    description: ID of the creator of the event.
+                  attendees:
+                    type: array
+                    items:
+                      type: string
+                    description: List of attendees' IDs.
+        '404':
+          description: Event not found.
+        '500':
+          description: Internal server error. An unexpected error occurred.
+
+  /events/my-events:
+    get:
+      summary: Get events created by the authenticated user.
+      description: Retrieve all events created by the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved events created by the user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier of the event.
+                        title:
+                          type: string
+                          description: Title of the event.
+                        description:
+                          type: string
+                          description: Description of the event.
+                        date:
+                          type: string
+                          format: date-time
+                          description: Date and time of the event.
+                        creatorId:
+                          type: string
+                          description: ID of the creator of the event.
+                        attendees:
+                          type: array
+                          items:
+                            type: string
+                          description: List of attendees' IDs.
+        '404':
+          description: No events found for the authenticated user.
+        '500':
+          description: Internal server error. An unexpected error occurred.
+
+  /events/{eventId}/apply:
+    post:
+      summary: Apply for an event.
+      description: Allows a user to apply for an event and receive a QR code.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reminderTime:
+                  type: integer
+      responses:
+        '200':
+          description: User successfully applied for the event.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    type: object
+                    additionalProperties: true
+                  qrCodeUrl:
+                    type: string
+        '400':
+          description: Bad request. Validation failed.
+        '404':
+          description: Event not found.
+        '409':
+          description: User already applied for the event.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
