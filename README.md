@@ -1,4 +1,5 @@
-Eventful
+
+
 Eventful is a comprehensive ticketing platform designed to manage events efficiently. This project allows event creators to host events, manage attendees, and set reminders. Attendees can apply for events, set personal reminders, and access their event details with QR codes for easy verification.
 
 Features
